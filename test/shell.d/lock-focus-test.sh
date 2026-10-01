@@ -19,7 +19,13 @@ assert(
   'the session lock handler does not reach into the per-screen lock view'
 )
 
-const surface = serviceQml.slice(serviceQml.indexOf('WlSessionLockSurface {'))
+const surfaceStart = serviceQml.indexOf('WlSessionLockSurface {')
+let surfaceEnd = serviceQml.indexOf('{', surfaceStart)
+for (let depth = 0; surfaceEnd < serviceQml.length; surfaceEnd++) {
+  if (serviceQml[surfaceEnd] === '{') depth++
+  if (serviceQml[surfaceEnd] === '}' && --depth === 0) break
+}
+const surface = serviceQml.slice(surfaceStart, surfaceEnd + 1)
 
 assert(
   /Connections \{\s*target: sessionLock\s*function onSecureStateChanged\(\) \{\s*if \(sessionLock\.secure\) lockView\.forcePasswordFocus\(\)/.test(surface),
