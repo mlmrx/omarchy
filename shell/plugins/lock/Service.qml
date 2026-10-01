@@ -238,7 +238,6 @@ Item {
         root.pendingSessionLock = false
         sessionLockStabilizeTimer.stop()
         pendingSessionLockTimer.stop()
-        lockView.forcePasswordFocus()
         root.startFingerprint()
       }
     }
@@ -282,6 +281,15 @@ Item {
         onSubmitPassword: function(password) { root.submitPassword(password) }
         onClearFailureRequested: root.failureMessage = ""
         onWakeRequested: root.runWake()
+      }
+
+      // lockView lives in this per-screen delegate, so the session lock's own
+      // handler cannot see it; refocus from here once the lock is secure.
+      Connections {
+        target: sessionLock
+        function onSecureStateChanged() {
+          if (sessionLock.secure) lockView.forcePasswordFocus()
+        }
       }
 
     }

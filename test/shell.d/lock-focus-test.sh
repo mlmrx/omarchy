@@ -11,11 +11,18 @@ const serviceQml = fs.readFileSync(path.join(root, 'shell/plugins/lock/Service.q
 const secureHandlerStart = serviceQml.indexOf('onSecureStateChanged:')
 const lockHandlerStart = serviceQml.indexOf('onLockStateChanged:', secureHandlerStart)
 const secureHandler = serviceQml.slice(secureHandlerStart, lockHandlerStart)
-const secureBlockMatch = secureHandler.match(/if \(secure\) \{([\s\S]*?)\n      \}/)
-const secureBlock = secureBlockMatch ? secureBlockMatch[1] : ''
+
+// lockView is declared inside the per-screen WlSessionLockSurface delegate, so
+// naming it here is a ReferenceError that also skips startFingerprint().
+assert(
+  !secureHandler.includes('lockView'),
+  'the session lock handler does not reach into the per-screen lock view'
+)
+
+const surface = serviceQml.slice(serviceQml.indexOf('WlSessionLockSurface {'))
 
 assert(
-  secureBlock.includes('lockView.forcePasswordFocus()'),
-  'the password field regains focus when the compositor secures the lock surface'
+  /Connections \{\s*target: sessionLock\s*function onSecureStateChanged\(\) \{\s*if \(sessionLock\.secure\) lockView\.forcePasswordFocus\(\)/.test(surface),
+  'each lock surface refocuses its password field when the compositor secures the lock'
 )
 JS
